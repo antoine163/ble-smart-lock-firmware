@@ -1,90 +1,82 @@
-# Bluetooth LE Smart Lock
-Ce projet consiste en une serrure électronique pouvant être déverrouillée via Bluetooth Low Energy. 
+# Bluetooth LE Smart Lock - Firmware
 
-Il est constitué de 4 parties:
-- D'une carte électronique basée sur le module [bluenrg-m2](https://www.st.com/en/wireless-connectivity/bluenrg-m2.html).
-- D'un firmware pour le module [bluenrg-m2](https://www.st.com/en/wireless-connectivity/bluenrg-m2.html).
-- D'une carte électronique secondaire déportent le capteur de luminosité. (optionnelle).
-- D'une application Androïde pour le déverrouillage de la serrure a proximité.
+Ce fichier README fournit des instructions pour compiler, flasher et programmer le firmware de la serrure Bluetooth LE à utiliser avec le module BleuNRG.
 
-## Fonctions principales
-- Déverrouillage via Bluetooth Low Energie.
-- Ouverture par bouton poussoir.
-- Verrouillage automatique par perte de connection BLE.
+---
 
-## Fonctions secondaire
-- Éclairage d'ambience RGBW, pour l'affiche de l’état de la serrure.
-- Éclairage extérieur la nuit quand la serrure est ouverte.
+# Compilation
 
+1. Clonez le projet et ses sous-modules : 
+   ```
+   git clone --recurse-submodules https://github.com:antoine163/ble-smart-lock.git
+   ```
+2. Installez la chaîne de compilation croisée *arm-none-eabi-gcc*.
+3. Installez l'outil *cmake*.
+4. Téléchargez le SDK [STSW-BLUENRG1-DK](https://www.st.com/en/embedded-software/stsw-bluenrg1-dk.html). L'inscription sur ST est nécessaire.
+5. Extraites avec *innoextract* le contenu du dossier *library* vers `src/board/device/bluenrg-2`. Par exemple, si vous avez téléchargé *STSW-BLUENRG1-DK* près du fichier README.md :
+   ```
+   mkdir src/device/bluenrg-2
+   innoextract BlueNRG-1_2\ DK-3.2.3.0-Setup.exe -I app/Library
+   mv app/Library/* src/device/bluenrg-2/
+   rm -r app
+   ```
+6. Vous pouvez spécifier le répertoire de la chaîne d'outils avec la variable d'environnement *ARMGCC_DIR* si le compilateur croisé n'est pas trouvé.
+7. Compilez en fonction du modèle BlueNRG. Le modèle doit être passé à cmake via la variable *MODEL_BLUENRG*, avec comme valeur soit *M2SA* ou *M2SP*. Par exemple, pour compiler avec le BLUENRG-M2SA :
+   ```
+   export ARMGCC_DIR="/to/directory/of/arm-gcc"
+   mkdir build
+   cd build
+   cmake --toolchain cmake/arm-none-eabi-gcc.cmake -DMODEL_BLUENRG=M2SA -DCMAKE_BUILD_TYPE=Release ..
+   make
+   ```
 
-### États de la serrure
+---
 
-| BLE           | Porte   | Éclairage ambience  | Éclairage extérieur   | Voyant Bouton |
-| ------------- | :-----: | :------:            | :------:              | :----:        |
-| Appairage     |         | Vert sinusoïdale    | Éteint                | Éteint        |
-| Erreur radio  |         | Rouge fixe          | Éteint                | Éteint        |
-||
-| Non connecté  | Fermé   | Éteint              | Éteint                | Éteint        |
-| Connecté      | Fermé   | Bleu sinusoïdale    | Éteint                | **Allumé** sinusoïdale|
-| Déverrouillé  | Fermé   | Bleu fixe           | Éteint                | **Allumé** fixe| 
-||                              
-| Non connecté (suit déconnexion)               | Ouvert  | Rouge clignotent                    | Éteint                                | Éteint        |  
-| Non connecté (suit ouverture par clef)        | Ouvert  | **Blanc** (Nuit) \| Jaune (jour)    | **Allumé** (Nuit) \| Éteint (jour)    | Éteint        |
-| Connecté                                      | Ouvert  | **Blanc** (Nuit) \| Jaune (jour)    | **Allumé** (Nuit) \| Éteint (jour)    | Éteint        |
-| Déverrouillé                                  | Ouvert  | **Blanc** (Nuit) \| Jaune (jour)    | **Allumé** (Nuit) \| Éteint (jour)    | Éteint        |
+# Flashage
 
+## Via UART
 
-## Appairage
-Pour passer la serrure en mode appairage, appuyez brièvement sur le bouton bond.  
-![BleSmartLock poc](images/photo_top_bond.jpg)
+Vous aurez besoin de connecter un ftdi ou tout autre liaison série 3V3 au connecteur repéré FTDI sur le PCB. La liaison série est également disponible via le connecteur STDC14, repéré SWD sur le PCB.
 
-La lumière d'ambiance devient vert clignotante sinusoïdale et la serrure devient visible par les appareils BLE à proximité.
+|             FTDI/UART              |             SWD/UART             |
+| :--------------------------------: | :------------------------------: |
+| ![ftdi](images/photo_top_ftdi.jpg) | ![swd](images/photo_top_swd.jpg) |
 
-Le PIN par défaut est 215426. Il peut être changé via la liaison série avec la commande `pin new_pin`, où *new_pin* doit être compris entre 0 et 999999.
+1. Téléchargez [RF-Flasher utility](https://www.st.com/en/embedded-software/stsw-bnrgflasher.html). L'inscription sur ST est nécessaire.
+2. Installez et lancez RF-Flasher utility.
+3. Mettez le module en mode bootload en maintenant enfoncé le bouton *bond* et en effectuant un reset en appuyant sur le bouton *reset*. Vous pouvez désormais relâcher le bouton *bond*.
+4. Dans RF-Flasher utility, sélectionnez le port COM.
+5. Puis dans l’onglet *Image File*, sélectionnez le fichier ble_smart_lock.hex que vous trouverez dans le dossier de build ou le dossier `release`.
+6. Cliquez sur le bouton *Flash* et attendez que l'opération se termine avec succès.
+7. Redémarrez le module en appuyant sur le bouton *reset*.
 
+## Via SWD
 
-### Fermeture du mode appairage
-Le mode appairage peut être désactivé de plusieurs façons :
- - En appuyant brièvement sur le bouton *bond*.
- - Automatiquement après un délai de 10 secondes.
- - Automatiquement après une tentative d'appairage réussie ou échouée.
+Vous devrez connecter une sonde stlink-v2 au connecteur STDC14 repéré SWD sur le PCB.
 
-### Effacement de la liste des appareils appairés
-Pour effacer la liste des appareils appairés, maintenez le bouton *bond* enfoncé pendant plus de 3 secondes. Deux flashs blancs seront émis une fois la liste effacé.
+![swd](images/photo_top_swd.jpg)
 
-Il est possible de supprimer cette liste avec la commande `bond-clear` via la liaison série.
+### Via openocd
 
-## Liste des commande série
-- `help`: Afficher l'aide.
-- `verbose` : Lecture/écriture du mode verbeux. 1 pour activer, 0 (par défaut) - `pour désactiver.
-- `pin` : Lecture/écriture du code PIN (215426 par défaut).
-- `bri` : Lecture de la luminosité ambiante.
-- `bri-th` : Lecture/écriture du seuil jour/nuit (50% par défaut).
-- `bond` : Afficher la liste des appareils appairés.
-- `bond-clear` : Supprimer tous les appareils appairés (ou maintenir le bouton - `bond enfoncé pendant plus de 3 secondes).
-- `reset` : Réinitialiser toutes les valeurs par défaut.
+Avant tout, vous devrez installer openocd. Après avoir suivi les étapes de compilation avec cmake, dans le dossier de build, appelez la commande :
+```
+make flash
+```
 
-## Led rouge
-La LED rouge située sur le PCB s'allume en fonction de l'activité radio.  
-![BleSmartLock poc](images/photo_top_red_led.jpg)
+Si tout s'est bien passé, vous devriez voir apparaître dans le terminal :
+```
+** Programming Started **
+** Programming Finished **
+** Verify Started **
+** Verified OK **
+** Resetting Target **
+```
 
-# Fonctionnalités
+**Note** : Si ce n'est pas la première programmation, le module pourrait se mettre en veille, rendant la connexion avec OpenOCD difficile. Assurez-vous de faire un reset en appuyant sur le bouton reset sur le PCB. Le module n'entre pas en veille durant les 3 premières secondes.
 
-## Firmware de la serrure
-- Connection radio via Bluetooth LE.
-- Contrôle de l'ouverture de la serrure.
-- Bouton poussoir lumineux extérieure pour ouverture de la serrure et affichage de la possibilité d'ouverture.
-- Detection de la luminosité ambient.
-- Pilotage de ruban led RGBW 12V, pour affiche de l'état de la serrure.
-- Pilotage d'un éclairage 12V ([Mini-Light](https://github.com/antoine163/Mini-Light/tree/master/Elec/light))
+### Via BlueNRG-1 ST-LINK utility
 
-## Application Android
-- Scan et appairage avec la serrure BLE.
-- Renommage du la serrure BLE.
-- Déverrouillage et réglage de la proximité BLE.
-- Ouverture par bouton de la serrure BLE.
-- Notification lors de l'éloignement avec la serrure no verrouiller."
-
-
-
-
+1. Téléchargez [STSW-BNRG1STLINK](https://www.st.com/en/embedded-software/stsw-bnrg1stlink.html). L'inscription sur ST est nécessaire.
+2. Installez et lancez ST-LINK utility.
+3. Glissez-déposez le fichier ble_smart_lock.hex que vous trouverez dans le dossier de build ou le dossier `release`, dans la vue principale de ST-LINK utility.
+4. Démarrez la programmation avec le bouton *Program verify.*

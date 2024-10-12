@@ -1,4 +1,4 @@
-[submodule "Firmware/src/middleware/FreeRTOS-Kernel"]
-	path = Firmware/src/middleware/FreeRTOS-Kernel
+[submodule "src/middleware/FreeRTOS-Kernel"]
+	path = src/middleware/FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
 
