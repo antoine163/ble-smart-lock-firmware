@@ -8,7 +8,7 @@ Ce fichier README fournit des instructions pour compiler, flasher et programmer 
 
 1. Clonez le projet et ses sous-modules : 
    ```
-   git clone --recurse-submodules https://github.com:antoine163/ble-smart-lock.git
+   git clone --recurse-submodules https://github.com:antoine163/ble-smart-lock-firmware.git
    ```
 2. Installez la chaîne de compilation croisée *arm-none-eabi-gcc*.
 3. Installez l'outil *cmake*.
