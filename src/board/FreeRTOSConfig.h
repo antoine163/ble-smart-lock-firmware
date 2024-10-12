@@ -77,6 +77,7 @@
 #define configKERNEL_PROVIDED_STATIC_MEMORY       1
 #define configRECORD_STACK_HIGH_ADDRESS           1
 #define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H 1
+#define configENABLE_MPU                          0
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES           0
