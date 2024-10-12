@@ -1,4 +1,3 @@
 [submodule "src/middleware/FreeRTOS-Kernel"]
 	path = src/middleware/FreeRTOS-Kernel
-	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
-
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel/
