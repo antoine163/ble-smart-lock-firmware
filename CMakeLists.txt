@@ -28,6 +28,11 @@ message(STATUS "Project version: ${VERSION}")
 # Enable verbose to debug cmake
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
+# Write .clangd file for clangd pluging in vscodium
+file(WRITE ".clangd"
+     "CompileFlags:\n"
+     "    CompilationDatabase: ${CMAKE_BINARY_DIR}\n")
+
 # Compilation definitions
 # ##############################################################################
 add_compile_definitions(
