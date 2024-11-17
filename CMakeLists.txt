@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 # Define projects
 # ##############################################################################
@@ -35,6 +35,7 @@ file(WRITE ".clangd"
 
 # Compilation definitions
 # ##############################################################################
+
 add_compile_definitions(
     -DBLUENRG2_DEVICE
     -DBLE_STACK_CONFIGURATION=BLE_STACK_FULL_CONFIGURATION
@@ -66,6 +67,15 @@ endif()
 
 # Compilation options
 # ##############################################################################
+
+# Get sysroot path
+execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -print-sysroot
+        OUTPUT_VARIABLE SYSROOT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+# Compile options
 add_compile_options(
     -W -Wall -Wextra -Wpedantic
     -fmessage-length=0
@@ -81,6 +91,8 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:ASM>:assembler-with-cpp>
 
     $<$<CONFIG:Debug>:-g3>
+
+    -I${SYSROOT}/include # To add sysroot to compile_commands.json for clangd
 )
 
 # Link options
