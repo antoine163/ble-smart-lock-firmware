@@ -45,10 +45,11 @@
 #define _TASK_APP_FLASH_ERASE_GUARD_TIME 25 // 25 ms
 #define _TASK_APP_FLASH_WRITE_GUARD_TIME 1  // 1 ms
 
-#define _TASK_APP_RESTART_DELAY_TICK      (1 * 60 * 1000 / portTICK_PERIOD_MS)  //!< Tick to wait before restarting following error detection: 1min
-#define _TASK_APP_OFF_LIGHT_DELAY_TICK    (15 * 60 * 1000 / portTICK_PERIOD_MS) //!< Tick to wait before torn off light following disconnection: 15min
-#define _TASK_APP_CLEAR_BONDED_DELAY_TICK (3 * 1000 / portTICK_PERIOD_MS)       //!< Tick to wait before clear all bonded devices from push bond button: 3s
-#define _TASK_APP_EXIT_BOND_DELAY_TICK    (10 * 1000 / portTICK_PERIOD_MS)      //!< Tick to wait before exit the bond mode from active it: 10s
+#define _TASK_APP_RESTART_DELAY_TICK      pdMS_TO_TICKS(1 * 60 * 1000)  //!< Tick to wait before restarting following error detection: 1min
+#define _TASK_APP_OFF_LIGHT_DELAY_TICK    pdMS_TO_TICKS(15 * 60 * 1000) //!< Tick to wait before torn off light following disconnection: 15min
+#define _TASK_APP_CLEAR_BONDED_DELAY_TICK pdMS_TO_TICKS(3 * 1000)       //!< Tick to wait before clear all bonded devices from push bond button: 3s
+#define _TASK_APP_EXIT_BOND_DELAY_TICK    pdMS_TO_TICKS(10 * 1000)      //!< Tick to wait before exit the bond mode from active it: 10s
+#define _TASK_APP_MIN_CONNECTED_TICK      pdMS_TO_TICKS(4 * 1000)       //!< Minimum tick connection to consider a durable connection: 4s
 
 #define _TASK_APP_EVENT_QUEUE_LENGTH 8
 #define _TASK_APP_DATA_STORAGE_PAGE  (N_PAGES - 3)
@@ -143,6 +144,9 @@ typedef struct
     TickType_t ticksToOffLight;
     TimeOut_t timeOutOffLight;
 
+    // Timestamps of last connexion.
+    TickType_t lasConnectedTick;
+
     // Timeout to manage clean all bonded device follows pushed bond button.
     TickType_t ticksToClearBonded;
     TimeOut_t timeOutClearBonded;
@@ -188,6 +192,7 @@ void taskAppCodeInit()
     _taskApp.lastFlags = _TASK_APP_FLAG_BLE_NONE;
     _taskApp.ticksToRestart = portMAX_DELAY;
     _taskApp.ticksToOffLight = portMAX_DELAY;
+    _taskApp.lasConnectedTick = 0;
     _taskApp.ticksToClearBonded = portMAX_DELAY;
     _taskApp.ticksToExitBond = portMAX_DELAY;
 
@@ -498,12 +503,22 @@ void _taskAppUpdateLight()
             if _TASK_APP_LAST_FLAG_IS (CONNECTED)
             {
                 // Ble device is disconnected but the door is open.
-                // Turns on the red light to try to warn the user.
-                taskLightAnimBlink(0, COLOR_RED, 100, 500);
+
+                // Did the connection last less than 1s?
+                if ((xTaskGetTickCount() - _taskApp.lasConnectedTick) <= _TASK_APP_MIN_CONNECTED_TICK)
+                {
+                    // Act as if it was opened with the key.
+                    _taskAppSetLightOn();
+                }
+                else 
+                {
+                    // Turns on the red light to try to warn the user.
+                    taskLightAnimBlink(0, COLOR_RED, 100, 500);
+                }
             }
             else
             {
-                // Here, the door was opened with the key.
+                // Here, the door was opened with the key
                 _taskAppSetLightOn();
             }
 
@@ -559,6 +574,9 @@ void _taskAppBleEventConnectedHandle()
     // Disable exit bond timeout
     // If we are connected, we are definitely not in bond mode.
     _taskApp.ticksToExitBond = portMAX_DELAY;
+
+    // Get timestamp (in tick) of connexion
+    _taskApp.lasConnectedTick = xTaskGetTickCount();
 
     _TASK_APP_FLAG_SET(CONNECTED);
     _TASK_APP_FLAG_CLEAR(BONDING);
