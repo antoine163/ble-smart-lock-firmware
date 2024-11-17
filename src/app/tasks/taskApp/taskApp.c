@@ -106,6 +106,7 @@ typedef struct
     bool verbose;       /**< Verbose mode flag. */
     uint32_t pin;       /**< PIN number. */
     float brightnessTh; /**< Brightness threshold value. */
+    char deviceName[TASK_BLE_NAME_MAX_SIZE]; /**< Device name. */
 } taskAppNvmData_t;
 
 /**
@@ -119,6 +120,7 @@ typedef struct
         boardEvent_t boardEvent;     /**< Event related to the board. */
         bleEvent_t bleEvent;         /**< Event related to the board. */
         taskAppNvmData_t nvmNewData; /**< New non-volatile memory data. */
+        char deviceName[TASK_BLE_NAME_MAX_SIZE];         /**< Device name. */
     };
 } taskAppEventItem_t;
 
@@ -157,7 +159,8 @@ static taskApp_t _taskApp = {0};
 static const taskAppNvmData_t _taskAppNvmDefaultData = {
     .verbose = false,
     .pin = _TASK_APP_DEFAULT_FIX_PIN,
-    .brightnessTh = 50.f};
+    .brightnessTh = 50.f,
+    .deviceName = TASK_BLE_DEFAULT_NAME};
 
 // Private prototype functions -------------------------------------------------
 void _taskAppUpdateLight();
@@ -412,6 +415,25 @@ int taskAppSetVerbose(bool verbose)
 
     boardDgbEnable(verbose);
     return 0;
+}
+
+const char* taskAppGetDeviceName()
+{
+    return _taskAppNvmData.deviceName;
+}
+
+void taskAppSetDeviceName(const char* name)
+{
+    if(name != NULL)
+    {
+        taskAppEventItem_t eventItem = {.event = _TASK_APP_EVENT_WRITE_NVM};
+        memcpy((void *)&eventItem.nvmNewData,
+            (const void *)&_taskAppNvmData,
+            sizeof(taskAppNvmData_t));
+        strncpy(eventItem.nvmNewData.deviceName, name, TASK_BLE_NAME_MAX_SIZE);
+
+        xQueueSend(_taskApp.eventQueue, &eventItem, portMAX_DELAY);
+    }
 }
 
 void taskAppUnlock()

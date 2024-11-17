@@ -51,8 +51,6 @@
 #include <task.h>
 
 // Define ----------------------------------------------------------------------
-#define _TASK_BLE_DEFAULT_NAME             "Ble Smart Lock"
-#define _TASK_BLE_NAME_MAX_SIZE            16
 #define _TASK_BLE_BOND_ADV_INTERVAL_MIN_MS 160
 #define _TASK_BLE_BOND_ADV_INTERVAL_MAX_MS 320
 #define _TASK_BLE_ADV_INTERVAL_MIN_MS      600
@@ -399,6 +397,25 @@ int taskBleUpdateAtt(bleAtt_t att, const void *buf, size_t nbyte)
     return n;
 }
 
+void tackBleSetDeviceName(const char *name)
+{
+    uint8_t nameLen = strnlen(name, TASK_BLE_NAME_MAX_SIZE);
+    
+    xSemaphoreTake(_taskBle.bleStackMutex, portMAX_DELAY);
+    // Update device name
+    tBleStatus bleStatus = aci_gatt_update_char_value_ext(
+        0, _taskBle.serviceGapHandle, _taskBle.devNameCharGapHandle,
+        0x00, // GATT_LOCAL_UPDATE
+        nameLen,
+        0, nameLen, name);
+
+    xSemaphoreGive(_taskBle.bleStackMutex);
+
+    if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
+        boardDgb("Ble: Set device name error: %s\r\n",
+                _taskBleStatusToStr(_taskBle.bleStatus));
+}
+
 void taskBlePauseRadio()
 {
     if (_taskBle.bleStackMutex != NULL)
@@ -469,7 +486,8 @@ void BLE_IT_HANDLER()
 tBleStatus _taskBleInitDevice()
 {
     tBleStatus bleStatus;
-    uint8_t deviceName[] = _TASK_BLE_DEFAULT_NAME;
+    uint8_t* deviceName = taskAppGetDeviceName();
+    uint8_t deviceNameLen = strnlen(deviceName, TASK_BLE_NAME_MAX_SIZE);
     uint8_t bdaddr[] = {
         ROM_INFO->UNIQUE_ID_1,
         ROM_INFO->UNIQUE_ID_2,
@@ -486,8 +504,8 @@ tBleStatus _taskBleInitDevice()
     if (bleStatus != BLE_STATUS_SUCCESS)
         return bleStatus;
 
-    /* Set the TX power -14 dBm */
-    bleStatus = aci_hal_set_tx_power_level(1, 0);
+    /* Set the TX power 8 dBm */
+    bleStatus = aci_hal_set_tx_power_level(1, 7);
     if (bleStatus != BLE_STATUS_SUCCESS)
         return bleStatus;
 
@@ -511,7 +529,7 @@ tBleStatus _taskBleInitDevice()
     bleStatus = aci_gap_init(
         GAP_PERIPHERAL_ROLE,
         0x02, // Privacy controller enabled
-        _TASK_BLE_NAME_MAX_SIZE,
+        TASK_BLE_NAME_MAX_SIZE,
         &_taskBle.serviceGapHandle,
         &_taskBle.devNameCharGapHandle,
         &_taskBle.appearanceCharGapHandle);
@@ -522,8 +540,8 @@ tBleStatus _taskBleInitDevice()
     bleStatus = aci_gatt_update_char_value_ext(
         0, _taskBle.serviceGapHandle, _taskBle.devNameCharGapHandle,
         0x00, // GATT_LOCAL_UPDATE
-        sizeof(deviceName) - 1,
-        0, sizeof(deviceName) - 1, deviceName);
+        deviceNameLen,
+        0, deviceNameLen, deviceName);
 
     // Update Appearance (from Bluetooth SIG)
     // - Category (bits 15 to 6) : 0x01C Access Control
@@ -556,9 +574,10 @@ tBleStatus _taskBleInitDevice()
         return bleStatus;
 
     // Set scan response
-    uint8_t scanResponseData[31] = "  " _TASK_BLE_DEFAULT_NAME;
-    scanResponseData[0] = 1 + sizeof(_TASK_BLE_DEFAULT_NAME) - 1;
+    uint8_t scanResponseData[31];
+    scanResponseData[0] = 1 + deviceNameLen;
     scanResponseData[1] = 0x09;
+    memcpy(&scanResponseData[2], deviceName, deviceNameLen);
     _taskBle.bleStatus = hci_le_set_scan_response_data(scanResponseData[0] + 1, scanResponseData);
     if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
         return bleStatus;

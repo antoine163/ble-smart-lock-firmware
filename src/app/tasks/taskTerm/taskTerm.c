@@ -69,6 +69,7 @@ int _taskTermReadline(char *str, size_t nbyte);
 int _taskTermCmdVersion(int argc, char *argv[]);
 int _taskTermCmdHelp(int argc, char *argv[]);
 int _taskTermCmdVerbose(int argc, char *argv[]);
+int _taskTermCmdName(int argc, char *argv[]);
 int _taskTermCmdPin(int argc, char *argv[]);
 int _taskTermCmdBri(int argc, char *argv[]);
 int _taskTermCmdBriTh(int argc, char *argv[]);
@@ -94,6 +95,11 @@ static taskTermCmd_t _taskTermCmd[] = {
         .name = "verbose",
         .help = "Read/write verbose mode. 1 to enable, 0 (default) to disable.",
         .func = _taskTermCmdVerbose,
+    },
+    {
+        .name = "name",
+        .help = "Read/write device name (default is '" TASK_BLE_DEFAULT_NAME "').",
+        .func = _taskTermCmdName,
     },
     {
         .name = "pin",
@@ -386,6 +392,37 @@ int _taskTermCmdVerbose(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
+int _taskTermCmdName(int argc, char *argv[])
+{
+    char deviceName[TASK_BLE_NAME_MAX_SIZE+1] = "";
+
+    if (argc == 1)
+        strncpy(deviceName, taskAppGetDeviceName(), TASK_BLE_NAME_MAX_SIZE);
+    else if (argc == 2)
+    {
+        int newDeviceNameLen = strlen(argv[1]);
+        if (newDeviceNameLen > 0 && newDeviceNameLen <= TASK_BLE_NAME_MAX_SIZE)
+        {
+            strncpy(deviceName, argv[1], TASK_BLE_NAME_MAX_SIZE);
+            taskAppSetDeviceName(argv[1]);
+            tackBleSetDeviceName(argv[1]);
+        }
+        else
+        {
+            boardPrintf("Invalid argument. Device name must be 1 to %d characters long.\r\n", TASK_BLE_NAME_MAX_SIZE);
+            return EXIT_FAILURE;
+        }
+    }
+    else
+    {
+        boardPrintf("Error: Invalid number of arguments!\r\n");
+        return EXIT_FAILURE;
+    }
+
+    boardPrintf("Device name: '%s'\r\n", deviceName);
+    return EXIT_SUCCESS;
+}
+
 int _taskTermCmdPin(int argc, char *argv[])
 {
     unsigned int pin;
@@ -476,6 +513,7 @@ int _taskTermCmdConfig(int argc, char *argv[])
         _taskTermCmdVerbose(1, argv);
         _taskTermCmdPin(1, argv);
         _taskTermCmdBriTh(1, argv);
+        _taskTermCmdName(1, argv);
         return EXIT_SUCCESS;
     }
 

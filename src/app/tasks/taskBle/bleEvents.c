@@ -226,20 +226,22 @@ void aci_gatt_attribute_modified_event(
 
     // 'Generic access profile (GAP) service' from 0x0005 to 0x000b
     // Device name
-    else if (Attr_Handle == 0x0006)
+    else if (Attr_Handle == 0x0006 + 1)
     {
+        // Update device name
+        taskAppSetDeviceName((char *)Attr_Data);
     }
     // Appearance
-    else if (Attr_Handle == 0x0008)
+    else if (Attr_Handle == 0x0008 + 1)
     {
     }
     // Peripheral preferred connection parameters
-    else if (Attr_Handle == 0x000a)
+    else if (Attr_Handle == 0x000a + 1)
     {
     }
     // Central address resolution
     // It is added only when controller-based privacy (0x02) is enabled on aci_gap_init() API
-    else if (Attr_Handle == 0x000c)
+    else if (Attr_Handle == 0x000c + 1)
     {
     }
 

@@ -37,6 +37,10 @@
 #include "sm.h"
 #include <stddef.h>
 
+// Define ----------------------------------------------------------------------
+#define TASK_BLE_DEFAULT_NAME             "Ble Smart Lock"
+#define TASK_BLE_NAME_MAX_SIZE            16
+
 // Enum ------------------------------------------------------------------------
 
 /**
@@ -79,6 +83,7 @@ void taskBleSetBondMode(bool enable);
 int taskBleGetBonded(Bonded_Device_Entry_t *bondedDevices);
 int taskBleClearAllPairing();
 int taskBleUpdateAtt(bleAtt_t att, const void *buf, size_t nbyte);
+void tackBleSetDeviceName(const char *name);
 
 // Function called by the BLE task to send an event to the App task
 // This function is implemented in the App task

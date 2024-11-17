@@ -53,6 +53,9 @@ int taskAppSetPin(uint32_t pin);
 bool taskAppGetVerbose();
 int taskAppSetVerbose(bool verbose);
 
+const char* taskAppGetDeviceName();
+void taskAppSetDeviceName(const char* name);
+
 void taskAppUnlock();
 void taskAppOpenDoor();
 
