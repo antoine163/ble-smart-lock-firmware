@@ -1,78 +1,107 @@
-# Bluetooth LE Smart Lock - Firmware
+# Firmware de Serrure Bluetooth LE
 
-Vous trouverez ici les instructions pour compiler, flasher et programmer le firmware de la serrure Bluetooth LE à utiliser avec le module BlueNRG.
+Ce guide fournit les instructions pour compiler, flasher et programmer le firmware de la serrure Bluetooth LE basée sur le module BlueNRG.
 
-## Compilation
+---
 
-1. Clonez le projet et ses sous-modules :
-   ```sh
+## 🚀 Compilation
+
+### Étapes à suivre :
+
+1. Cloner le projet et ses sous-modules :
+   ```bash
    git clone --recurse-submodules https://github.com/antoine163/ble-smart-lock-firmware.git
    ```
-2. Installez la chaîne de compilation croisée *arm-none-eabi-gcc*.
-3. Installez l'outil *cmake*.
-4. Téléchargez le SDK [STSW-BLUENRG1-DK](https://www.st.com/en/embedded-software/stsw-bluenrg1-dk.html). L'inscription sur ST est nécessaire.
-5. Extrayez avec *innoextract* le contenu du dossier *library* vers `src/board/device/bluenrg-2`. Par exemple, si vous avez téléchargé *STSW-BLUENRG1-DK* près du fichier README.md :
-   ```sh
-   mkdir -p src/device/bluenrg-2
+
+2. Installer la chaîne de compilation croisée `arm-none-eabi-gcc`.
+
+3. Installer l'outil `cmake`.
+
+4. Télécharger le SDK [STSW-BLUENRG1-DK](https://www.st.com/en/embedded-software/stsw-bluenrg1-dk.html). 
+   > *Remarque : L'inscription sur le site de STMicroelectronics est nécessaire.*
+
+5. Extraire le SDK avec `innoextract` :
+   ```bash
+   mkdir src/device/bluenrg-2
    innoextract BlueNRG-1_2\ DK-3.2.3.0-Setup.exe -I app/Library
    mv app/Library/* src/device/bluenrg-2/
    rm -r app
    ```
-6. Vous pouvez spécifier le répertoire de la chaîne d'outils avec la variable d'environnement *ARMGCC_DIR* si le compilateur croisé n'est pas trouvé.
-7. Compilez en fonction du modèle BlueNRG. Le modèle doit être passé à cmake via la variable *MODEL_BLUENRG*, avec comme valeur soit *M2SA* ou *M2SP*. Par exemple, pour compiler avec le BLUENRG-M2SA :
-   ```sh
-   export ARMGCC_DIR="/to/directory/of/arm-gcc"
-   mkdir build
-   cd build
+
+6. Configurer la chaîne d'outils :
+   Si le compilateur croisé n'est pas détecté, spécifiez son répertoire avec la variable d'environnement `ARMGCC_DIR`.
+
+7. Compiler le projet en fonction du modèle BlueNRG (M2SA ou M2SP) :
+   ```bash
+   export ARMGCC_DIR="/chemin/vers/arm-gcc"
+   mkdir build && cd build
    cmake --toolchain cmake/arm-none-eabi-gcc.cmake -DMODEL_BLUENRG=M2SA -DCMAKE_BUILD_TYPE=Release ..
    make
    ```
 
-## Flashage
+---
+
+## 🔌 Flashage du Firmware
 
 ### Via UART
 
-Vous aurez besoin de connecter un adaptateur FTDI ou toute autre liaison série 3V3 au connecteur repéré FTDI sur le PCB. La liaison série est également disponible via le connecteur STDC14, repéré SWD sur le PCB.
+1. Connecter un module FTDI (3.3V) au connecteur FTDI sur le PCB.  
+   Vous pouvez également utiliser le connecteur STDC14 (repéré SWD sur le PCB).
 
-|             FTDI/UART              |             SWD/UART             |
-| :--------------------------------: | :------------------------------: |
-| ![ftdi](images/photo_top_ftdi.jpg) | ![swd](images/photo_top_swd.jpg) |
+2. Télécharger [RF-Flasher Utility](https://www.st.com/en/embedded-software/stsw-bnrgflasher.html).  
+   > *Inscription requise sur le site de STMicroelectronics.*
 
-1. Téléchargez [RF-Flasher utility](https://www.st.com/en/embedded-software/stsw-bnrgflasher.html). L'inscription sur ST est nécessaire.
-2. Installez et lancez RF-Flasher utility.
-3. Mettez le module en mode bootload en maintenant enfoncé le bouton *bond* et en effectuant un reset en appuyant sur le bouton *reset*. Vous pouvez désormais relâcher le bouton *bond*.
-4. Dans RF-Flasher utility, sélectionnez le port COM.
-5. Puis dans l’onglet *Image File*, sélectionnez le fichier `ble_smart_lock.hex` que vous trouverez dans le dossier de build ou le dossier `release`.
-6. Cliquez sur le bouton *Flash* et attendez que l'opération se termine avec succès.
-7. Redémarrez le module en appuyant sur le bouton *reset*.
+3. Passer le module en mode bootloader :  
+   Maintenez le bouton `bond` enfoncé, puis appuyez sur `reset`. Relâchez ensuite `bond`.
+
+4. Utiliser RF-Flasher Utility :
+   - Sélectionnez le port COM.
+   - Choisissez le fichier `ble_smart_lock.hex` dans le dossier de build ou `release`.
+   - Cliquez sur `Flash` pour lancer le processus.
+
+5. **Redémarrer le module** en appuyant sur le bouton `reset`.
+
+---
 
 ### Via SWD
 
-Vous devrez connecter une sonde ST-LINK v2 au connecteur STDC14 repéré SWD sur le PCB.
+#### Avec *OpenOCD*
 
-![swd](images/photo_top_swd.jpg)
+1. Installer **OpenOCD** sur votre système.
 
-#### Via OpenOCD
+2. Après la compilation :
+   - Naviguez dans le dossier de build.
+   - Lancez la commande :
+     ```bash
+     make flash
+     ```
 
-Avant tout, vous devrez installer OpenOCD. Après avoir suivi les étapes de compilation avec cmake, dans le dossier de build, appelez la commande :
-```sh
-make flash
-```
+3. Messages attendus à l'écran :
+   ```text
+   ** Programming Started **
+   ** Programming Finished **
+   ** Verify Started **
+   ** Verified OK **
+   ** Resetting Target **
+   ```
 
-Si tout s'est bien passé, vous devriez voir apparaître dans le terminal :
-```
-** Programming Started **
-** Programming Finished **
-** Verify Started **
-** Verified OK **
-** Resetting Target **
-```
+   > *Remarque :* Si le module ne répond pas, il pourrait être en veille. Faites un reset en appuyant sur le bouton `reset` avant de réessayer.
 
-**Note** : Si ce n'est pas la première programmation, le module pourrait se mettre en veille, rendant la connexion avec OpenOCD difficile. Assurez-vous de faire un reset en appuyant sur le bouton reset sur le PCB. Le module n'entre pas en veille durant les 3 premières secondes.
+#### Avec *BlueNRG-1 ST-LINK Utility*
 
-#### Via BlueNRG-1 ST-LINK Utility
+1. Télécharger [STSW-BNRG1STLINK](https://www.st.com/en/embedded-software/stsw-bnrg1stlink.html).
 
-1. Téléchargez [STSW-BNRG1STLINK](https://www.st.com/en/embedded-software/stsw-bnrg1stlink.html). L'inscription sur ST est nécessaire.
-2. Installez et lancez ST-LINK Utility.
-3. Glissez-déposez le fichier `ble_smart_lock.hex` que vous trouverez dans le dossier de build ou le dossier `release`, dans la vue principale de ST-LINK Utility.
-4. Démarrez la programmation avec le bouton *Program verify*.
+2. Installer et lancer **ST-LINK Utility**.
+
+3. Procéder au flashage :
+   - Faites glisser le fichier `ble_smart_lock.hex` dans l'interface principale.
+   - Cliquez sur le bouton `Program verify` pour démarrer la programmation.
+
+---
+
+## 📸 Images de référence
+
+| FTDI/UART | SWD/UART |
+|-----------|----------|
+| ![FTDI](images/photo_top_ftdi.jpg) | ![SWD](images/photo_top_swd.jpg) |
+
