@@ -246,19 +246,19 @@ void aci_gatt_attribute_modified_event(
     }
 
     // -- Application attributs --
-    // Commend to unlock lock
+    // Command to unlock lock
     else if (Attr_Handle == _taskBle.lockStateCharAppHandle + 1)
     {
         if (Attr_Data[0] == 0x01)
             taskAppUnlock();
     }
-    // Commend to open door
+    // Command to open door
     else if (Attr_Handle == _taskBle.openDoorCharAppHandle + 1)
     {
         if (Attr_Data[0] == 0x01)
             taskAppOpenDoor();
     }
-    // Commend to set brightness threshold
+    // Command to set brightness threshold
     else if (Attr_Handle == _taskBle.brightnessThCharAppHandle + 1)
     {
         taskAppSetBrightnessTh(*((float *)Attr_Data));

@@ -198,6 +198,8 @@ void _taskBleUpdateWhitelist();
 void _taskBleMakeDiscoverable(bool bond);
 uint16_t _taskBleGetCharHandleFromAtt(bleAtt_t att);
 void _taskBleManageFlags();
+tBleStatus _taskBleSetScanResponseData(char* deviceName, bool doorIsOpen);
+
 
 // Implemented functions -------------------------------------------------------
 void taskBleCodeInit()
@@ -473,6 +475,28 @@ void _taskBleManageFlags()
     }
 }
 
+tBleStatus _taskBleSetScanResponseData(char* deviceName, bool doorIsOpen)
+{
+    uint8_t deviceNameLen = strnlen(deviceName, TASK_BLE_NAME_MAX_SIZE);
+
+    int scanResponseLen = 0;
+    uint8_t scanResponseData[31];
+    memset(scanResponseData, 0, sizeof(scanResponseData));
+    scanResponseData[scanResponseLen++] = 4;
+    scanResponseData[scanResponseLen++] = 0x2D; // Manufacturer Specific Data
+    scanResponseData[scanResponseLen++] = 0xff; // Company Identifier (generic)
+    scanResponseData[scanResponseLen++] = 0xff; // Company Identifier (generic)
+    scanResponseData[scanResponseLen++] = doorIsOpen ? 0x01 : 0x00; // État de la Porte (0x01 pour ouverte, 0x00 pour fermée)
+
+    scanResponseData[scanResponseLen++] = 1 + deviceNameLen;
+    scanResponseData[scanResponseLen++] = 0x09; // Complete Local Name
+    memcpy(&scanResponseData[scanResponseLen], deviceName, deviceNameLen);
+    scanResponseLen += deviceNameLen;
+    return hci_le_set_scan_response_data(
+        scanResponseLen, 
+        scanResponseData);
+}
+
 void BLE_IT_HANDLER()
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -574,11 +598,8 @@ tBleStatus _taskBleInitDevice()
         return bleStatus;
 
     // Set scan response
-    uint8_t scanResponseData[31];
-    scanResponseData[0] = 1 + deviceNameLen;
-    scanResponseData[1] = 0x09;
-    memcpy(&scanResponseData[2], deviceName, deviceNameLen);
-    _taskBle.bleStatus = hci_le_set_scan_response_data(scanResponseData[0] + 1, scanResponseData);
+    _taskBle.bleStatus = _taskBleSetScanResponseData(
+        deviceName, boardIsOpen());
     if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
         return bleStatus;
 
