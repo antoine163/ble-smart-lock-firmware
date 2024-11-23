@@ -22,6 +22,10 @@
  * SOFTWARE.
  */
 
+// Include ----------------------------------------------------------------------
+#include <tasks/taskApp/taskApp.h>
+#include <tasks/taskBle/taskBle.h>
+
 // Define ----------------------------------------------------------------------
 #define BLE_EVENT_DEBUG 1
 

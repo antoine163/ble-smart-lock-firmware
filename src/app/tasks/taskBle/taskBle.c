@@ -198,7 +198,7 @@ void _taskBleUpdateWhitelist();
 void _taskBleMakeDiscoverable(bool bond);
 uint16_t _taskBleGetCharHandleFromAtt(bleAtt_t att);
 void _taskBleManageFlags();
-tBleStatus _taskBleSetScanResponseData(char* deviceName, bool doorIsOpen);
+tBleStatus _taskBleUpdateScanResponseData();
 
 
 // Implemented functions -------------------------------------------------------
@@ -387,6 +387,11 @@ int taskBleUpdateAtt(bleAtt_t att, const void *buf, size_t nbyte)
         nbyte, /* Value_Length */
         (uint8_t *)buf);
 
+    if (att == BLE_ATT_DOOR_STATE)
+    {
+        _taskBleUpdateScanResponseData();
+    }
+
     if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
     {
         boardDgb("Ble: update char value error: %s\r\n",
@@ -399,7 +404,7 @@ int taskBleUpdateAtt(bleAtt_t att, const void *buf, size_t nbyte)
     return n;
 }
 
-void tackBleSetDeviceName(const char *name)
+void taskBleSetDeviceName(const char *name)
 {
     uint8_t nameLen = strnlen(name, TASK_BLE_NAME_MAX_SIZE);
     
@@ -411,6 +416,7 @@ void tackBleSetDeviceName(const char *name)
         nameLen,
         0, nameLen, name);
 
+    _taskBleUpdateScanResponseData();
     xSemaphoreGive(_taskBle.bleStackMutex);
 
     if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
@@ -475,8 +481,9 @@ void _taskBleManageFlags()
     }
 }
 
-tBleStatus _taskBleSetScanResponseData(char* deviceName, bool doorIsOpen)
+tBleStatus _taskBleUpdateScanResponseData()
 {
+    char* deviceName = taskAppGetDeviceName();
     uint8_t deviceNameLen = strnlen(deviceName, TASK_BLE_NAME_MAX_SIZE);
 
     int scanResponseLen = 0;
@@ -486,15 +493,17 @@ tBleStatus _taskBleSetScanResponseData(char* deviceName, bool doorIsOpen)
     scanResponseData[scanResponseLen++] = 0x2D; // Manufacturer Specific Data
     scanResponseData[scanResponseLen++] = 0xff; // Company Identifier (generic)
     scanResponseData[scanResponseLen++] = 0xff; // Company Identifier (generic)
-    scanResponseData[scanResponseLen++] = doorIsOpen ? 0x01 : 0x00; // État de la Porte (0x01 pour ouverte, 0x00 pour fermée)
+    scanResponseData[scanResponseLen++] = boardIsOpen() ? 0x01 : 0x00; // État de la Porte (0x01 pour ouverte, 0x00 pour fermée)
 
     scanResponseData[scanResponseLen++] = 1 + deviceNameLen;
     scanResponseData[scanResponseLen++] = 0x09; // Complete Local Name
     memcpy(&scanResponseData[scanResponseLen], deviceName, deviceNameLen);
     scanResponseLen += deviceNameLen;
-    return hci_le_set_scan_response_data(
+    tBleStatus status =  hci_le_set_scan_response_data(
         scanResponseLen, 
         scanResponseData);
+
+    return status;
 }
 
 void BLE_IT_HANDLER()
@@ -598,8 +607,7 @@ tBleStatus _taskBleInitDevice()
         return bleStatus;
 
     // Set scan response
-    _taskBle.bleStatus = _taskBleSetScanResponseData(
-        deviceName, boardIsOpen());
+    _taskBle.bleStatus = _taskBleUpdateScanResponseData();
     if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
         return bleStatus;
 
@@ -762,6 +770,10 @@ void _taskBleMakeDiscoverable(bool bond)
         if ((_taskBle.bleStatus != BLE_STATUS_SUCCESS) &&
             (_taskBle.bleStatus != BLE_STATUS_NOT_ALLOWED))
             break;
+
+        _taskBle.bleStatus = _taskBleUpdateScanResponseData();
+        if (_taskBle.bleStatus != BLE_STATUS_SUCCESS)
+                break;
 
         if (bond == true)
         {
