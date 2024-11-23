@@ -405,7 +405,7 @@ int _taskTermCmdName(int argc, char *argv[])
         {
             strncpy(deviceName, argv[1], TASK_BLE_NAME_MAX_SIZE);
             taskAppSetDeviceName(argv[1]);
-            tackBleSetDeviceName(argv[1]);
+            taskBleSetDeviceName(argv[1]);
         }
         else
         {
