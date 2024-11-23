@@ -1,4 +1,4 @@
-# Firmware de Serrure Bluetooth LE
+# Bluetooth LE Smart Lock - Firmware
 
 Ce guide fournit les instructions pour compiler, flasher et programmer le firmware de la serrure Bluetooth LE basée sur le module BlueNRG.
 
