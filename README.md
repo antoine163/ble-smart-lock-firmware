@@ -67,14 +67,17 @@ Ce guide fournit les instructions pour compiler, flasher et programmer le firmwa
 
 #### Avec *OpenOCD*
 
+Voici la version corrigée du markdown :
+
 1. Installer **OpenOCD** sur votre système.
 
-2. Après la compilation :
-   - Naviguez dans le dossier de build.
-   - Lancez la commande :
-     ```bash
-     make flash
-     ```
+2. Depuis le répertoire racine du firmware, lancez la commande suivante :
+
+   ```bash
+   openocd -d0 -f tools/openocd/bluenrg-2.cfg -c "program release/ble_smart_lock_<version>.hex verify reset exit; shutdown"
+   ```
+
+   > **Remarque :** Remplacez `<version>` par la version que vous souhaitez flasher.
 
 3. Messages attendus à l'écran :
    ```text
