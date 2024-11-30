@@ -78,6 +78,7 @@ typedef enum
     _TASK_BLE_FLAG_DO_SLAVE_SECURITY_REQ = 0x02,  /**< Perform security request as BLE slave. */
     _TASK_BLE_FLAG_DO_CONFIGURE_WHITELIST = 0x04, /**< Configure BLE whitelist. */
     _TASK_BLE_FLAG_DO_NOTIFY_READ_REQ = 0x08,     /**< Notify or request to read. */
+    _TASK_BLE_FLAG_DO_REBONDING = 0x20,           /**< ReBonding in progress */
     _TASK_BLE_FLAG_BONDING = 0x40,                /**< Bonding in progress */
     _TASK_BLE_FLAG_CONNECTED = 0x80,              /**< device connected */
 
@@ -478,6 +479,15 @@ void _taskBleManageFlags()
             (uint8_t *)&brightness);
 
         aci_gatt_allow_read(_taskBle.connectionHandle);
+    }
+
+    if _TASK_BLE_FLAG_IS (DO_REBONDING)
+    {
+        _TASK_BLE_FLAG_CLEAR(DO_REBONDING);
+        if (aci_gap_allow_rebond(_taskBle.connectionHandle) == BLE_STATUS_SUCCESS)
+        {
+            _TASK_BLE_FLAG_SET(BONDING);
+        }
     }
 }
 

@@ -453,6 +453,7 @@ void aci_gap_slave_security_initiated_event(void)
 void aci_gap_bond_lost_event(void)
 {
     BLE_EVENT_PRINT("aci_gap_bond_lost_event\r\n");
+    _TASK_BLE_FLAG_SET(DO_REBONDING);
 }
 
 void aci_gap_proc_complete_event(
