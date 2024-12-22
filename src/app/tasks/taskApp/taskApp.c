@@ -35,6 +35,7 @@
 #include "tasks/taskBle/taskBle.h"
 #include "tasks/taskLight/taskLight.h"
 
+#include <board.h>
 #include <string.h>
 
 #include <FreeRTOS.h>
@@ -145,7 +146,9 @@ typedef struct
     TimeOut_t timeOutOffLight;
 
     // Timestamps of last connexion.
-    TickType_t lasConnectedTick;
+    TickType_t lastConnectedTick;
+    // Brightness measured at last connection.
+    float lastConnectedBrightness;
 
     // Timeout to manage clean all bonded device follows pushed bond button.
     TickType_t ticksToClearBonded;
@@ -168,7 +171,7 @@ static const taskAppNvmData_t _taskAppNvmDefaultData = {
 
 // Private prototype functions -------------------------------------------------
 void _taskAppUpdateLight();
-void _taskAppSetLightOn();
+void _taskAppSetLightOn(float curentBrightness);
 
 void _taskAppBleEventErrHandle();
 void _taskAppBleEventDisconnectedHandle();
@@ -192,7 +195,8 @@ void taskAppCodeInit()
     _taskApp.lastFlags = _TASK_APP_FLAG_BLE_NONE;
     _taskApp.ticksToRestart = portMAX_DELAY;
     _taskApp.ticksToOffLight = portMAX_DELAY;
-    _taskApp.lasConnectedTick = 0;
+    _taskApp.lastConnectedTick = 0;
+    _taskApp.lastConnectedBrightness = -1;
     _taskApp.ticksToClearBonded = portMAX_DELAY;
     _taskApp.ticksToExitBond = portMAX_DELAY;
 
@@ -482,7 +486,7 @@ void _taskAppUpdateLight()
     else if _TASK_APP_FLAG_IS (CONNECTED)
     {
         if _TASK_APP_FLAG_IS (OPENED)
-            _taskAppSetLightOn();
+            _taskAppSetLightOn( boardGetBrightness() );
         else if _TASK_APP_FLAG_IS (UNLOCKED)
             taskLightAnimTrans(200, COLOR_BLUE, 500);
         else
@@ -499,10 +503,10 @@ void _taskAppUpdateLight()
                 // Ble device is disconnected but the door is open.
 
                 // Did the connection last less than 1s?
-                if ((xTaskGetTickCount() - _taskApp.lasConnectedTick) <= _TASK_APP_MIN_CONNECTED_TICK)
+                if ((xTaskGetTickCount() - _taskApp.lastConnectedTick) <= _TASK_APP_MIN_CONNECTED_TICK)
                 {
                     // Act as if it was opened with the key.
-                    _taskAppSetLightOn();
+                    _taskAppSetLightOn( _taskApp.lastConnectedBrightness );
                 }
                 else 
                 {
@@ -513,7 +517,7 @@ void _taskAppUpdateLight()
             else
             {
                 // Here, the door was opened with the key
-                _taskAppSetLightOn();
+                _taskAppSetLightOn( boardGetBrightness() );
             }
 
             // Turn off the light in 15 minutes if there are no new events.
@@ -529,9 +533,9 @@ void _taskAppUpdateLight()
     _taskApp.lastFlags = _taskApp.flags;
 }
 
-void _taskAppSetLightOn()
+void _taskAppSetLightOn(float curentBrightness)
 {
-    if (boardGetBrightness() <= _taskAppNvmData.brightnessTh)
+    if (curentBrightness <= _taskAppNvmData.brightnessTh)
         taskLightAnimTrans(200, COLOR_WHITE_LIGHT, 200);
     else
         taskLightAnimTrans(200, COLOR_YELLOW, 200);
@@ -570,7 +574,9 @@ void _taskAppBleEventConnectedHandle()
     _taskApp.ticksToExitBond = portMAX_DELAY;
 
     // Get timestamp (in tick) of connexion
-    _taskApp.lasConnectedTick = xTaskGetTickCount();
+    _taskApp.lastConnectedTick = xTaskGetTickCount();
+    // Get brightness measured at the connexion.
+    _taskApp.lastConnectedBrightness = boardGetBrightness();
 
     _TASK_APP_FLAG_SET(CONNECTED);
     _TASK_APP_FLAG_CLEAR(BONDING);
