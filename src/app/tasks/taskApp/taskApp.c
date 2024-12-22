@@ -457,12 +457,6 @@ void taskAppUnlock()
 
 void taskAppOpenDoor()
 {
-    if (boardIsLocked() == true)
-    {
-        boardDgb("App: the lock is loked, can't open.\r\n");
-        return;
-    }
-
     boardDgb("App: open the Door.\r\n");
     boardOpen();
 }
