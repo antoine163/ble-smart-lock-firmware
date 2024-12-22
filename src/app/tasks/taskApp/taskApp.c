@@ -287,7 +287,7 @@ void taskAppCode(__attribute__((unused)) void *parameters)
                 taskLightAnimBlink(0, COLOR_WHITE, 80, 120);
 
                 // Wait tow flash befor restore light state
-                _taskApp.ticksToClearBonded = 600 / portTICK_PERIOD_MS;
+                _taskApp.ticksToClearBonded = pdMS_TO_TICKS(600);
                 vTaskSetTimeOutState(&_taskApp.timeOutClearBonded);
                 _taskApp.clearBondedLightFlash = true;
             }

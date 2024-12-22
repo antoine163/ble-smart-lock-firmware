@@ -207,7 +207,7 @@ void _taskLightFuncAnimTrans()
     if (xTaskCheckForTimeOut(&_taskLight.anim.timeOut, &_taskLight.anim.ticksToWait) != pdFALSE)
     {
         // Init time
-        _taskLight.anim.ticksToWait = ANIM_STEP_TIME / portTICK_PERIOD_MS;
+        _taskLight.anim.ticksToWait = pdMS_TO_TICKS(ANIM_STEP_TIME);
         vTaskSetTimeOutState(&_taskLight.anim.timeOut);
 
         _taskLight.anim.currentDc += _taskLight.anim.trandIncDc;
@@ -245,7 +245,7 @@ void _taskLightInitAnimSin(float freq, unsigned int timeToOff)
     {
         float tick = xTaskGetTickCount();
         _taskLight.anim.sinInit =
-            -((tick + (float)(timeToOff / portTICK_PERIOD_MS) * _taskLight.anim.currentDc / 100.f) * (M_TWOPI * _taskLight.anim.sinFreq * portTICK_PERIOD_MS / 1000.f)) - acosf(0.f / 50.f - 1.f) + M_PI;
+            -((tick + (float)(pdMS_TO_TICKS(timeToOff)) * _taskLight.anim.currentDc / 100.f) * (M_TWOPI * _taskLight.anim.sinFreq * portTICK_PERIOD_MS / 1000.f)) - acosf(0.f / 50.f - 1.f) + M_PI;
     }
 
     _taskLight.anim.func = _taskLightFuncAnimSin;
@@ -256,7 +256,7 @@ void _taskLightFuncAnimSin()
     if (xTaskCheckForTimeOut(&_taskLight.anim.timeOut, &_taskLight.anim.ticksToWait) != pdFALSE)
     {
         // Init time
-        _taskLight.anim.ticksToWait = ANIM_STEP_TIME / portTICK_PERIOD_MS;
+        _taskLight.anim.ticksToWait = pdMS_TO_TICKS(ANIM_STEP_TIME);
         vTaskSetTimeOutState(&_taskLight.anim.timeOut);
 
         float tick = xTaskGetTickCount();
@@ -270,8 +270,8 @@ void _taskLightInitAnimBlink(unsigned int timeOn,
                              unsigned int timeOff)
 {
     // Init blick animation
-    _taskLight.anim.blinkTicksOn = timeOn / portTICK_PERIOD_MS;
-    _taskLight.anim.blinkTicksOff = timeOff / portTICK_PERIOD_MS;
+    _taskLight.anim.blinkTicksOn = pdMS_TO_TICKS(timeOn);
+    _taskLight.anim.blinkTicksOff = pdMS_TO_TICKS(timeOff);
 
     // Init time
     _taskLight.anim.ticksToWait = _taskLight.anim.blinkTicksOff;
@@ -315,7 +315,7 @@ TickType_t _taskLightAnim()
     else if (xTaskCheckForTimeOut(&_taskLight.anim.timeOut, &_taskLight.anim.ticksToWait) != pdFALSE)
     {
         // Init time
-        _taskLight.anim.ticksToWait = ANIM_STEP_TIME / portTICK_PERIOD_MS;
+        _taskLight.anim.ticksToWait = pdMS_TO_TICKS(ANIM_STEP_TIME);
         vTaskSetTimeOutState(&_taskLight.anim.timeOut);
 
         _taskLight.anim.currentDc -= _taskLight.anim.switchOffDecDc;

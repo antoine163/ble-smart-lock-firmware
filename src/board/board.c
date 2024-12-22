@@ -194,7 +194,7 @@ void _boardEnableIo(bool enable)
         if (GPIO_ReadBit(EN_IO_PIN) == Bit_RESET)
         {
             GPIO_WriteBit(EN_IO_PIN, Bit_SET);
-            vTaskDelay(100 / portTICK_PERIOD_MS); // Wait stabilizing
+            vTaskDelay(pdMS_TO_TICKS(100)); // Wait stabilizing
         }
     }
     else
@@ -359,7 +359,7 @@ void boardOpen()
     GPIO_Init(&GPIO_InitStruct);
 
     GPIO_SetBits(LOCK_PIN);
-    vTaskDelay(150 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(150));
     GPIO_ResetBits(LOCK_PIN);
 
     if (_board.loked == false)

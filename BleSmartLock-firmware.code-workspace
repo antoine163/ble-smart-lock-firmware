@@ -9,6 +9,7 @@
 		"cmake.buildDirectory": "/tmp/${workspaceFolderBasename}-build",
 		"cmake.configureArgs": [
 			"-DMODEL_BLUENRG=M2SP"
+			// "-DMODEL_BLUENRG=M2SA"
 		],
 		// "cmake.generator": "Unix Makefiles"
 	},

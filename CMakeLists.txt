@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 
-
-
-
-
-
 # Set VERSION from cmake argument or the last git hash.
 if(NOT DEFINED VERSION)
     # Get the last git tag

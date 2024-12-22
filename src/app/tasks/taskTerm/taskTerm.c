@@ -560,7 +560,7 @@ int _taskTermCmdBondedClear(
 {
     taskBleClearAllPairing();
     boardPrintf("Clearing bonded devices.\r\n");
-    vTaskDelay(400 / portTICK_PERIOD_MS); // wait to clear bonded devices.
+    vTaskDelay(pdMS_TO_TICKS(400)); // wait to clear bonded devices.
     boardReset();
 
     return EXIT_SUCCESS;
@@ -573,7 +573,7 @@ int _taskTermCmdReset(
     taskAppResetConfig();
     taskBleClearAllPairing();
     boardPrintf("Reseting config and clearing bonded devices.\r\n");
-    vTaskDelay(400 / portTICK_PERIOD_MS); // Wait to write default config and clear bonded devices.
+    vTaskDelay(pdMS_TO_TICKS(400)); // Wait to write default config and clear bonded devices.
     boardReset();
 
     return EXIT_SUCCESS;
