@@ -49,7 +49,7 @@
 #define _TASK_APP_RESTART_DELAY_TICK      pdMS_TO_TICKS(1 * 60 * 1000)  //!< Tick to wait before restarting following error detection: 1min
 #define _TASK_APP_OFF_LIGHT_DELAY_TICK    pdMS_TO_TICKS(15 * 60 * 1000) //!< Tick to wait before torn off light following disconnection: 15min
 #define _TASK_APP_CLEAR_BONDED_DELAY_TICK pdMS_TO_TICKS(3 * 1000)       //!< Tick to wait before clear all bonded devices from push bond button: 3s
-#define _TASK_APP_EXIT_BOND_DELAY_TICK    pdMS_TO_TICKS(10 * 1000)      //!< Tick to wait before exit the bond mode from active it: 10s
+#define _TASK_APP_EXIT_BOND_DELAY_TICK    pdMS_TO_TICKS(60 * 1000)      //!< Tick to wait before exit the bond mode from active it: 1min
 #define _TASK_APP_MIN_CONNECTED_TICK      pdMS_TO_TICKS(4 * 1000)       //!< Minimum tick connection to consider a durable connection: 4s
 
 #define _TASK_APP_EVENT_QUEUE_LENGTH 8
