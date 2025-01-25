@@ -72,6 +72,7 @@ int boardPrintf(char const *format, ...);
 char boardReadChar(unsigned int timeout);
 
 void boardSetLightColor(color_t color);
+color_t boardGetLightColor();
 void boardSetLightDc(float dc);
 
 float boardGetBrightness();

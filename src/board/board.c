@@ -293,6 +293,11 @@ void boardSetLightColor(color_t color)
     }
 }
 
+color_t boardGetLightColor()
+{
+    return _board.lightColor;
+}
+
 void boardSetLightDc(float dc)
 {
     // To try to make the perceived brightness more natural in relation to the

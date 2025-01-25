@@ -148,7 +148,7 @@ typedef struct
     // Timestamps of last connexion.
     TickType_t lastConnectedTick;
     // Brightness measured at last connection.
-    float lastConnectedBrightness;
+    float connectedBrightness;
 
     // Timeout to manage clean all bonded device follows pushed bond button.
     TickType_t ticksToClearBonded;
@@ -196,7 +196,7 @@ void taskAppCodeInit()
     _taskApp.ticksToRestart = portMAX_DELAY;
     _taskApp.ticksToOffLight = portMAX_DELAY;
     _taskApp.lastConnectedTick = 0;
-    _taskApp.lastConnectedBrightness = -1;
+    _taskApp.connectedBrightness = -1;
     _taskApp.ticksToClearBonded = portMAX_DELAY;
     _taskApp.ticksToExitBond = portMAX_DELAY;
 
@@ -486,7 +486,7 @@ void _taskAppUpdateLight()
     else if _TASK_APP_FLAG_IS (CONNECTED)
     {
         if _TASK_APP_FLAG_IS (OPENED)
-            _taskAppSetLightOn( boardGetBrightness() );
+            _taskAppSetLightOn( _taskApp.connectedBrightness );
         else if _TASK_APP_FLAG_IS (UNLOCKED)
             taskLightAnimTrans(200, COLOR_BLUE, 500);
         else
@@ -502,11 +502,11 @@ void _taskAppUpdateLight()
             {
                 // Ble device is disconnected but the door is open.
 
-                // Did the connection last less than 1s?
+                // Did the connection last less than 10s?
                 if ((xTaskGetTickCount() - _taskApp.lastConnectedTick) <= _TASK_APP_MIN_CONNECTED_TICK)
                 {
                     // Act as if it was opened with the key.
-                    _taskAppSetLightOn( _taskApp.lastConnectedBrightness );
+                    _taskAppSetLightOn( _taskApp.connectedBrightness );
                 }
                 else 
                 {
@@ -575,8 +575,9 @@ void _taskAppBleEventConnectedHandle()
 
     // Get timestamp (in tick) of connexion
     _taskApp.lastConnectedTick = xTaskGetTickCount();
-    // Get brightness measured at the connexion.
-    _taskApp.lastConnectedBrightness = boardGetBrightness();
+    // Update brightness connexion if the light is off.
+    if (boardGetLightColor() != COLOR_WHITE_LIGHT)
+        _taskApp.connectedBrightness = boardGetBrightness();
 
     _TASK_APP_FLAG_SET(CONNECTED);
     _TASK_APP_FLAG_CLEAR(BONDING);
